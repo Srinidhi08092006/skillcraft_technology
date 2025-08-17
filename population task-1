@@ -1,0 +1,18 @@
+import matplotlib.pyplot as plt
+import pandas as pd
+data = {
+    "Age Group": ["0-20 Years", "21-64 Years", "65+ Years"],
+    "Population_Millions": [512, 807, 98],
+    "Percentage": [36.1, 57.0, 6.9]
+}
+
+df = pd.DataFrame(data)
+plt.figure(figsize=(8,5))
+bars = plt.bar(df["Age Group"], df["Population_Millions"], color=['gold', 'skyblue', 'pink'])
+plt.title("India's Population Distribution by Age (2022)", fontsize=14, fontweight='bold')
+plt.xlabel("Age Group")
+plt.ylabel("Population (Millions)")
+for bar, pct in zip(bars, df["Percentage"]):
+    plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 10, f"{pct}%", 
+             ha='center', fontsize=10, fontweight='bold')
+plt.show()
