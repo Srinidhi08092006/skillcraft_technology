@@ -1,0 +1,58 @@
+import pandas as pd
+import numpy as np
+df = pd.read_csv("customer_data.csv")
+print(df)
+def entropy(target_col):
+    elements, counts = np.unique(target_col, return_counts=True)
+    entropy_val = 0
+    for i in range(len(elements)):
+        prob = counts[i] / np.sum(counts)
+        entropy_val += -prob * np.log2(prob)
+    return entropy_val
+def info_gain(data, split_attribute_name, target_name="Purchase"):
+    total_entropy = entropy(data[target_name])
+    vals, counts = np.unique(data[split_attribute_name], return_counts=True)
+    weighted_entropy = 0
+    for i in range(len(vals)):
+        subset = data[data[split_attribute_name] == vals[i]]
+        weighted_entropy += (counts[i] / np.sum(counts)) * entropy(subset[target_name])
+    return total_entropy - weighted_entropy
+def id3(data, original_data, features, target_attribute="Purchase", parent_class=None):
+    if len(np.unique(data[target_attribute])) <= 1:
+        return np.unique(data[target_attribute])[0]
+    elif len(data) == 0:
+        return np.unique(original_data[target_attribute])[
+            np.argmax(np.unique(original_data[target_attribute], return_counts=True)[1])
+        ]
+    elif len(features) == 0:
+        return parent_class
+    else:
+        parent_class = np.unique(data[target_attribute])[
+            np.argmax(np.unique(data[target_attribute], return_counts=True)[1])
+        ]
+        gains = [info_gain(data, feat, target_attribute) for feat in features]
+        best_feature = features[np.argmax(gains)]
+        tree = {best_feature: {}}
+        remaining_features = [f for f in features if f != best_feature]
+        for value in np.unique(data[best_feature]):
+            sub_data = data[data[best_feature] == value]
+            subtree = id3(sub_data, df, remaining_features, target_attribute, parent_class)
+            tree[best_feature][value] = subtree
+        return tree
+features = list(df.columns[:-1])
+tree = id3(df, df, features, target_attribute="Purchase")
+print("\nDecision Tree:\n", tree)
+def predict(query, tree, default="no"):
+    for key in list(query.keys()):
+        if key in tree.keys():
+            try:
+                result = tree[key][query[key]]
+            except:
+                return default
+            
+            if isinstance(result, dict):
+                return predict(query, result)
+            else:
+                return result
+query = {"Age": 40, "Job": "admin", "Marital": "married", "Education": "tertiary", "Balance": 1500}
+print("\nPrediction for query:", predict(query, tree))
