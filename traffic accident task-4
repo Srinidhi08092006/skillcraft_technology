@@ -1,0 +1,48 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+df = pd.read_csv("accidents.csv")
+df["Date"] = pd.to_datetime(df["Date"])
+df["Hour"] = pd.to_datetime(df["Time"], format="%H:%M").dt.hour
+time_bins = [0, 6, 12, 18, 24]
+labels = ["Night", "Morning", "Afternoon", "Evening"]
+df["Time_of_Day"] = pd.cut(df["Hour"], bins=time_bins, labels=labels, right=False)
+road_counts = df["Road_Condition"].value_counts()
+weather_counts = df["Weather"].value_counts()
+time_counts = df["Time_of_Day"].value_counts()
+plt.figure(figsize=(14,5))
+plt.subplot(1,3,1)
+plt.bar(road_counts.index, road_counts.values, color="skyblue")
+plt.title("Accidents by Road Condition")
+plt.xticks(rotation=45)
+plt.subplot(1,3,2)
+plt.bar(weather_counts.index, weather_counts.values, color="orange")
+plt.title("Accidents by Weather")
+plt.xticks(rotation=45)
+plt.subplot(1,3,3)
+plt.bar(time_counts.index.astype(str), time_counts.values, color="green")
+plt.title("Accidents by Time of Day")
+plt.tight_layout()
+plt.show()
+plt.figure(figsize=(8,6))
+severity_colors = {"Minor":"blue", "Moderate":"orange", "Severe":"red"}
+colors = [severity_colors[s] for s in df["Severity"]]
+plt.scatter(df["Longitude"], df["Latitude"], c=colors, s=100, alpha=0.7, edgecolors="black")
+plt.title("Accident Hotspots (by Severity)")
+plt.xlabel("Longitude")
+plt.ylabel("Latitude")
+plt.show()
+pivot = pd.crosstab(df["Road_Condition"], df["Weather"])
+plt.figure(figsize=(8,6))
+plt.imshow(pivot, cmap="YlOrRd", aspect="auto")
+plt.colorbar(label="Accident Count")
+plt.xticks(ticks=np.arange(len(pivot.columns)), labels=pivot.columns, rotation=45)
+plt.yticks(ticks=np.arange(len(pivot.index)), labels=pivot.index)
+for i in range(len(pivot.index)):
+    for j in range(len(pivot.columns)):
+        plt.text(j, i, pivot.iloc[i, j], ha="center", va="center", color="black")
+
+plt.title("Road Condition vs Weather (Accidents)")
+plt.show()
+
+
